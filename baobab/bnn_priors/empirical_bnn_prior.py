@@ -150,7 +150,7 @@ class EmpiricalBNNPrior(BaseBNNPrior):
         return sampled_vel_disp
 
     def approximate_theta_E_for_SIS(self, vel_disp_iso, z_lens, z_src):
-        """Compute the Einstein radius for a given isotropic velocity dispersion
+        r"""Compute the Einstein radius for a given isotropic velocity dispersion
         assuming a singular isothermal sphere (SIS) mass profile
 
         Parameters
@@ -166,7 +166,9 @@ class EmpiricalBNNPrior(BaseBNNPrior):
         ----
         The computation is purely analytic.
 
-        .. math::\theta_E = 4 \pi \frac{\sigma_V^2}{c^2} \frac{D_{ls}}{D_s}
+        .. math::
+
+            \theta_E = 4 \pi \frac{\sigma_V^2}{c^2} \frac{D_{ls}}{D_s}
 
         Returns
         -------
