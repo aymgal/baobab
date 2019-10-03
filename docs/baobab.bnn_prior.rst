@@ -51,3 +51,11 @@ baobab.bnn_priors.parameter_models module
     :members:
     :undoc-members:
     :show-inheritance:
+
+baobab.bnn_priors.k_correction module
+-------------------------------------
+
+.. automodule:: baobab.bnn_priors.k_correction
+    :members:
+    :undoc-members:
+    :show-inheritance:
