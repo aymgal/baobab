@@ -12,7 +12,7 @@ __all__ += ['eval_{:s}_logpdf'.format(d) for d in dist_names]
 __all__ += ['eval_{:s}_logpdf_approx'.format(d) for d in dist_names]
 __all__ += ['hyperparams']
 
-def sample_uniform(lower, upper, force_integer=False):
+def sample_uniform(lower, upper):
     """Sample from a uniform distribution
 
     Parameters
@@ -30,13 +30,9 @@ def sample_uniform(lower, upper, force_integer=False):
     """
     u = np.random.rand()
     sample = lower + (upper - lower)*u
-    if force_integer:
-        sample = int(sample)
-        if sample < lower: sample == int(lower)
-        if sample > upper: sample == int(upper)
     return sample
 
-def eval_uniform_pdf(eval_at, lower, upper):
+def eval_uniform_pdf(eval_at, lower, upper, force_integer=False):
     """Evaluate the uniform PDF
 
     See `sample_uniform` for parameter definitions.

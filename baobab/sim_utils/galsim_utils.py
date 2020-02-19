@@ -1,13 +1,17 @@
-import galsim
 import numpy as np
 from lenstronomy.Util import util
 
 def get_galsim_image(image_size, pixel_size, catalog_index=0, 
-                     scale=1, angle=0, center_x=0, center_y=0,
+                     galsim_scale=1, galsim_angle=0, galsim_center_x=0, galsim_center_y=0,
                      psf_size=49, psf_pixel_size=0.074, galaxy_type='real',
                      psf_type='real', psf_gaussian_fwhm=0.2, no_convolution=False,
-                     draw_image_method='auto', catalog_dir=None, catalog_name=None):
-    
+                     draw_image_method='auto', catalog_dir=None, catalog_name=None,
+                     verbose=False):
+    """
+    Generates a realistic galaxy using galsim (HST F814W extracted).
+    """
+    import galsim
+
     if catalog_dir is None:
         catalog_dir = '/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/divers/GalSim-releases-2.2/examples/data'
     
@@ -15,14 +19,15 @@ def get_galsim_image(image_size, pixel_size, catalog_index=0,
         catalog_name = 'real_galaxy_catalog_23.5_example.fits'
         
     # effective pixel size
-    pixel_size_eff = pixel_size / scale
+    pixel_size_eff = pixel_size / galsim_scale
         
     # dilate factor for the PSF wrt to original HST
     psf_dilate_factor = psf_pixel_size / 0.074  # taken for HST F814W band
 
     # Load catalog of galaxies
     cat = galsim.COSMOSCatalog(dir=catalog_dir, file_name=catalog_name)
-    print("Number of galaxies in catalog '{}' : {}".format(catalog_name, cat.nobjects))
+    if verbose:
+        print("Number of galaxies in catalog '{}' : {}".format(catalog_name, cat.nobjects))
     
     # Get galaxy object
     gal = cat.makeGalaxy(catalog_index, gal_type=galaxy_type, noise_pad_size=0)
@@ -52,26 +57,29 @@ def get_galsim_image(image_size, pixel_size, catalog_index=0,
         psf_kernel_untouched = np.zeros((image_size, image_size))
     
     # apply rotation
-    if angle != 0:
-        gal = gal.rotate(angle * galsim.radians)
+    if galsim_angle != 0:
+        gal = gal.rotate(galsim_angle * galsim.radians)
     
     # Performs convolution with PSF
     if no_convolution is False:
         if psf_type == 'real' and galaxy_type == 'parametric':
-            print("Warning : no 'real' PSF convolution possible with gal_type 'parametric' !")
+            print("WARNING : no 'real' PSF convolution possible with gal_type 'parametric' !")
         else:
             gal = galsim.Convolve(gal, psf)
     
     # Project galaxy on an image grid
     image_galaxy = gal.drawImage(nx=image_size, ny=image_size, use_true_center=True,
-                                 offset=[center_x, center_y],
+                                 offset=[galsim_center_x, galsim_center_y],
                                  scale=pixel_size_eff, method=draw_image_method).array
     
     return image_galaxy, psf_kernel, psf_kernel_untouched
 
 
 def kwargs_galsim2interpol(image_size, pixel_size, kwargs_galsim_setup, kwargs_galsim_param):
-    kwargs_galsim_all = util.merge_dicts(kwargs_galsim_setup, kwargs_galsim_param)
+    kwargs_galsim_param['catalog_index'] = int(kwargs_galsim_param['catalog_index'])
+    kwargs_galsim_param_nomag = kwargs_galsim_param.copy()
+    magnitude = kwargs_galsim_param_nomag.pop('magnitude')  # magnitude norm performed in baobab, not galsim
+    kwargs_galsim_all = util.merge_dicts(kwargs_galsim_setup, kwargs_galsim_param_nomag)
     image, psf_kernel, _ = get_galsim_image(image_size, pixel_size, **kwargs_galsim_all)
     kwargs_interpol = {
         'image': image,
@@ -79,5 +87,7 @@ def kwargs_galsim2interpol(image_size, pixel_size, kwargs_galsim_setup, kwargs_g
         'center_x': 0,  # performed by galsim
         'center_y': 0,  # performed by galsim
         'phi_G': 0,     # performed by galsim
+        'magnitude': magnitude,
+        # Note that 'amp' should not be set here, will be computed according to the magnitude
     }
     return kwargs_interpol
