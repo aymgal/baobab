@@ -16,6 +16,9 @@ class Selection:
         """
         self.components = components
         self.init_selections = [eval(s) for s in selection_cfg['initial']]
+        #self.init_selections += self.get_ellipticity_selections()  # certain profiles do not have 'e1', 'e2'
+
+    def add_ellipticity_selections(self):
         self.init_selections += self.get_ellipticity_selections()
 
     def get_ellipticity_selections(self):
