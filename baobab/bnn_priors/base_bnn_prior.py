@@ -62,7 +62,7 @@ class BaseBNNPrior(ABC):
                           SERSIC_ELLIPSE=['magnitude', 'center_x', 'center_y', 'n_sersic', 'R_sersic', 'e1', 'e2'],
                           LENSED_POSITION=['magnitude'],
                           SOURCE_POSITION=['ra_source', 'dec_source', 'magnitude'],
-                          GALSIM=['catalog_index', 'scale', 'angle', 'center_x', 'center_x'])  # TODO : add magnitude
+                          GALSIM=['catalog_index', 'galsim_scale', 'galsim_angle', 'galsim_center_x', 'galsim_center_y'])  # TODO : add magnitude
         setattr(self, 'params', params)
 
     def _raise_config_error(self, missing_key, parent_config_key, bnn_prior_class):

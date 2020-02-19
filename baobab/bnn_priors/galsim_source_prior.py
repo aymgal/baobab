@@ -57,6 +57,7 @@ class GalsimSourcePrior(BaseBNNPrior):
             kwargs[comp][param_name] = self.sample_param(hyperparams)
 
         # In case of pixelated light such as galsim galaxies, translate to 'interpol' profile of lenstronomy
+        self.original_sample = kwargs.copy()  # save for public access
         if self._src_light_is_pixel:
             kwargs_interpol = self._kwargs_pixel2interpol(kwargs['src_light'])
             kwargs['src_light'] = kwargs_interpol

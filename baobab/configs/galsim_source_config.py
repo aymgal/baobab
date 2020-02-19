@@ -49,13 +49,14 @@ cfg.image = dict(
              )
 
 cfg.external = dict(
-                        src_light = dict( # should be consistent with 'GALSIM' profile
-                                no_convolution=False,
-                                catalog_dir='/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/divers/GalSim-releases-2.2/examples/data',
-                                catalog_name='real_galaxy_catalog_23.5_example.fits',
-                                draw_image_method='auto',
-                            )
+                    src_light = dict( # should be consistent with 'GALSIM' profile
+                            psf_pixel_size=0.02,
+                            no_convolution=False,
+                            catalog_dir='/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/divers/GalSim-releases-2.2/examples/data',
+                            catalog_name='real_galaxy_catalog_23.5_example.fits',
+                            draw_image_method='auto',
                         )
+                    )
 
 cfg.bnn_omega = dict(
                  lens_mass = dict(
@@ -81,7 +82,7 @@ cfg.bnn_omega = dict(
                                               ),
                                  theta_E = dict(
                                                 dist='normal',
-                                                mu=1,
+                                                mu=2,
                                                 sigma=0.1,
                                                 lower=0.5,
                                                 upper=2
@@ -204,34 +205,33 @@ cfg.bnn_omega = dict(
                                              dist='uniform',
                                              lower=0,
                                              upper=95,
-                                             force_integer=True,
                                              ),
-                                # magnitude = dict(
-                                #              dist='normal',
-                                #              mu=20.407,
-                                #              sigma=0.001,
-                                #              ),
-                                scale = dict(
+                                magnitude = dict(
+                                             dist='normal',
+                                             mu=20.407,
+                                             sigma=1,
+                                             ),
+                                galsim_scale = dict(
                                             dist='normal',
                                             mu=1,
-                                            sigma=0.05,
+                                            sigma=0.001,
                                             ),
-                                angle = dict(
+                                galsim_angle = dict(
                                              dist='normal',
                                              mu=0,
                                              sigma=0.05,
                                              lower=-np.pi,
                                              upper=np.pi,
                                              ),
-                                center_x = dict(
+                                galsim_center_x = dict(
                                          dist='normal',
                                                 mu=0,
-                                                sigma=0.01,
+                                                sigma=2,
                                                 ),
-                                center_y = dict(
+                                galsim_center_y = dict(
                                          dist='normal',
                                                 mu=0,
-                                                sigma=0.01,
+                                                sigma=2,
                                                 ),
                                 ),
 
