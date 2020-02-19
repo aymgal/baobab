@@ -5,8 +5,9 @@ class BaseBNNPrior(ABC):
     """Abstract base class equipped with PDF evaluation and sampling utility functions for various lens/source macromodels
 
     """
-    def __init__(self, bnn_omega, components):
+    def __init__(self, bnn_omega, components, external=None):
         self.components = components
+        self.external = external
         for comp in bnn_omega:
             setattr(self, comp, bnn_omega[comp])
         self._set_required_parameters()
@@ -60,7 +61,8 @@ class BaseBNNPrior(ABC):
                           SHEAR_GAMMA_PSI=['gamma_ext', 'psi_ext'],
                           SERSIC_ELLIPSE=['magnitude', 'center_x', 'center_y', 'n_sersic', 'R_sersic', 'e1', 'e2'],
                           LENSED_POSITION=['magnitude'],
-                          SOURCE_POSITION=['ra_source', 'dec_source', 'magnitude'],)
+                          SOURCE_POSITION=['ra_source', 'dec_source', 'magnitude'],
+                          GALSIM=['catalog_index', 'scale', 'angle', 'center_x', 'center_x'])  # TODO : add magnitude
         setattr(self, 'params', params)
 
     def _raise_config_error(self, missing_key, parent_config_key, bnn_prior_class):
