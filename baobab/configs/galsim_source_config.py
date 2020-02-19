@@ -204,7 +204,7 @@ cfg.bnn_omega = dict(
                                              dist='uniform',
                                              lower=0,
                                              upper=95,
-                                             force_integer=True
+                                             force_integer=True,
                                              ),
                                 # magnitude = dict(
                                 #              dist='normal',
