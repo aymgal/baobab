@@ -70,9 +70,15 @@ def main():
     psf_models = instantiate_PSF_models(cfg.psf, cfg.instrument.pixel_scale)
     n_psf = len(psf_models)
     # Instantiate density models
+    # in case of pixelated light profiles, e.g. from galsim galaxies
+    pixel_profile_bool = cfg.bnn_omega.src_light.profile in ['GALSIM']
+    if pixel_profile_bool is True:
+        src_light_profile_eff = 'INTERPOL'
+    else:
+        src_light_profile_eff = cfg.bnn_omega.src_light.profile
     kwargs_model = dict(
                     lens_model_list=[cfg.bnn_omega.lens_mass.profile, cfg.bnn_omega.external_shear.profile],
-                    source_light_model_list=[cfg.bnn_omega.src_light.profile],
+                    source_light_model_list=[src_light_profile_eff],
                     )       
     lens_mass_model = LensModel(lens_model_list=kwargs_model['lens_model_list'])
     src_light_model = LightModel(light_model_list=kwargs_model['source_light_model_list'])
@@ -87,8 +93,13 @@ def main():
         ps_model = PointSource(point_source_type_list=kwargs_model['point_source_model_list'], fixed_magnification_list=[False])
     # Instantiate Selection object
     selection = Selection(cfg.selection, cfg.components)
+    if not pixel_profile_bool:  # those have ellipticiy components
+        selection.add_ellipticity_selections()
     # Initialize BNN prior
-    bnn_prior = getattr(bnn_priors, cfg.bnn_prior_class)(cfg.bnn_omega, cfg.components)
+    bnn_prior = getattr(bnn_priors, cfg.bnn_prior_class)(cfg.bnn_omega, cfg.components, 
+                                                         external=getattr(cfg, 'external', None))
+    if pixel_profile_bool:
+        bnn_prior.setup_pixel_profiles(cfg.image, cfg.instrument, cfg.numerics)
     # Initialize empty metadata dataframe
     metadata = pd.DataFrame()
     metadata_path = os.path.join(save_dir, 'metadata.csv')
@@ -119,7 +130,12 @@ def main():
         meta = {}
         for comp in cfg.components:
             for param_name, param_value in sample[comp].items():
-                meta['{:s}_{:s}'.format(comp, param_name)] = param_value  
+                meta['{:s}_{:s}'.format(comp, param_name)] = param_value
+            # typically for pixelated profiles, originally sampled param can be added to metadata 
+            if hasattr(bnn_prior, 'original_sample'):
+                for param_name, param_value in bnn_prior.original_sample[comp].items():
+                    if '{:s}_{:s}'.format(comp, param_name) not in meta:
+                        meta['{:s}_{:s}'.format(comp, param_name)] = param_value  
         #if cfg.bnn_prior_class in ['DiagonalCosmoBNNPrior']:
         #    if cfg.bnn_omega.time_delays.calculate_time_delays:
         #        # Order time delays in increasing dec
@@ -143,6 +159,7 @@ def main():
             for i in range(4):
                 meta['x_image_{:d}'.format(i)] = x_image[i]
                 meta['y_image_{:d}'.format(i)] = y_image[i]
+        meta['src_light_amp'] = img_features['src_light_amp']
         meta['total_magnification'] = img_features['total_magnification']
         meta['img_filename'] = img_filename
         metadata = metadata.append(meta, ignore_index=True)
