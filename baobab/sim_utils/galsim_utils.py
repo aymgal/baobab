@@ -102,6 +102,10 @@ def _prepare_galsim(image_size, pixel_size, supersampling_factor,
     kwargs_galsim_param_ = kwargs_galsim_param.copy()
     if 'magnitude' in kwargs_galsim_param:
         del kwargs_galsim_param_['magnitude']
+    # galsim takes offset in pixel units instead of physical units
+    if 'magnitude' in kwargs_galsim_param:
+        kwargs_galsim_param_['galsim_center_x'] /= pixel_size
+        kwargs_galsim_param_['galsim_center_y'] /= pixel_size
     # update pixel size so the galsim resolution matches the lenstronomy one *after* supersampling
     pixel_size_eff = pixel_size / supersampling_factor
     # pack galsim settings
