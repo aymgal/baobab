@@ -1,33 +1,27 @@
+import os
 import numpy as np
+import galsim
 from lenstronomy.Util import util
 
-def get_galsim_image(image_size, pixel_size, catalog_index=0, 
+def get_galsim_image(image_size, pixel_size, catalog_dir=None, catalog_name=None, catalog_index=0, 
                      galsim_scale=1, galsim_angle=0, galsim_center_x=0, galsim_center_y=0,
                      psf_size=49, psf_pixel_size=0.074, galaxy_type='real',
                      psf_type='real', psf_gaussian_fwhm=0.2, no_convolution=False,
-                     draw_image_method='auto', catalog_dir=None, catalog_name=None,
-                     verbose=False):
+                     draw_image_method='auto', verbose=False):
     """
     Generates a realistic galaxy using galsim (HST F814W extracted).
     """
-    import galsim
 
-    if catalog_dir is None:
-        catalog_dir = '/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/divers/GalSim-releases-2.2/examples/data'
-    
-    if catalog_name is None:
-        catalog_name = 'real_galaxy_catalog_23.5_example.fits'
+    # Load catalog of galaxies
+    cat = galsim.COSMOSCatalog(dir=catalog_dir, file_name=catalog_name)
+    if verbose:
+        print("Number of galaxies in catalog '{}' : {}".format(catalog_name, cat.nobjects))
         
     # effective pixel size
     pixel_size_eff = pixel_size / galsim_scale
         
     # dilate factor for the PSF wrt to original HST
     psf_dilate_factor = psf_pixel_size / 0.074  # taken for HST F814W band
-
-    # Load catalog of galaxies
-    cat = galsim.COSMOSCatalog(dir=catalog_dir, file_name=catalog_name)
-    if verbose:
-        print("Number of galaxies in catalog '{}' : {}".format(catalog_name, cat.nobjects))
     
     # Get galaxy object
     gal = cat.makeGalaxy(catalog_index, gal_type=galaxy_type, noise_pad_size=0)
@@ -74,20 +68,41 @@ def get_galsim_image(image_size, pixel_size, catalog_index=0,
     
     return image_galaxy, psf_kernel, psf_kernel_untouched
 
-
-def kwargs_galsim2interpol(image_size, pixel_size, kwargs_galsim_setup, kwargs_galsim_param):
-    kwargs_galsim_param['catalog_index'] = int(kwargs_galsim_param['catalog_index'])
-    kwargs_galsim_param_nomag = kwargs_galsim_param.copy()
-    magnitude = kwargs_galsim_param_nomag.pop('magnitude')  # magnitude norm performed in baobab, not galsim
-    kwargs_galsim_all = util.merge_dicts(kwargs_galsim_setup, kwargs_galsim_param_nomag)
-    image, psf_kernel, _ = get_galsim_image(image_size, pixel_size, **kwargs_galsim_all)
+def kwargs_galsim2interpol(image_size, pixel_size, supersampling_factor, 
+                           kwargs_galsim_setup, kwargs_galsim_param):
+    """
+    Takes as input galsim parameters, generates a galsim galaxy from those
+    and setup the 'INTERPOL' light profile of lenstronomy with the 
+    """
+    # prepare for galsim
+    args, kwargs = _prepare_galsim(image_size, pixel_size, supersampling_factor,
+                                   kwargs_galsim_setup, kwargs_galsim_param)
+    # generate galaxy
+    image, psf_kernel, _ = get_galsim_image(*args, **kwargs)
+    # setup the 'INTERPOL' profile
     kwargs_interpol = {
         'image': image,
         'scale': pixel_size,
         'center_x': 0,  # performed by galsim
         'center_y': 0,  # performed by galsim
         'phi_G': 0,     # performed by galsim
-        'magnitude': magnitude,
-        # Note that 'amp' should not be set here, will be computed according to the magnitude
+        # Note that 'amp' should not be set here, it will be computed according to the magnitude
     }
+    if 'magnitude' in kwargs_galsim_param:
+        kwargs_interpol['magnitude'] = kwargs_galsim_param['magnitude']
     return kwargs_interpol
+
+def _prepare_galsim(image_size, pixel_size, supersampling_factor, 
+                    kwargs_galsim_setup, kwargs_galsim_param):
+    # make sure the index is integer
+    kwargs_galsim_param['catalog_index'] = int(kwargs_galsim_param['catalog_index'])
+    # magnitude normalization performed in baobab afterwards, not in galsim
+    kwargs_galsim_param_ = kwargs_galsim_param.copy()
+    if 'magnitude' in kwargs_galsim_param:
+        del kwargs_galsim_param_['magnitude']
+    # update pixel size so the galsim resolution matches the lenstronomy one *after* supersampling
+    pixel_size_eff = pixel_size / supersampling_factor
+    # pack galsim settings
+    args = (image_size, pixel_size_eff)
+    kwargs = util.merge_dicts(kwargs_galsim_setup, kwargs_galsim_param_)
+    return args, kwargs

@@ -87,8 +87,8 @@ class GalsimSourcePrior(BaseBNNPrior):
     def setup_pixel_profiles(self, image, instruments, numerics):
         self._pixel_image_size  = image.num_pix
         self._pixel_pixel_scale = instruments.pixel_scale
-        # we take into account the supersampling factor, ensuring the best resolution on the pixel grid
-        self._pixel_pixel_scale /= numerics.get('supersampling_factor', 1)
+        # we want to take into account the supersampling factor, ensuring the best resolution on the pixel grid
+        self._pixel_supersampling_factor = numerics.get('supersampling_factor', 1)
 
     def _kwargs_pixel2interpol(self, kwargs_pixel):
         """Converts sampled parameters destined to pixelated realistic light profiles
@@ -99,7 +99,7 @@ class GalsimSourcePrior(BaseBNNPrior):
         kwargs_setup = self.external['src_light']
         if self.src_light.profile == 'GALSIM':
             kwargs_interpol = galsim_utils.kwargs_galsim2interpol(self._pixel_image_size, self._pixel_pixel_scale, 
-                                                                  kwargs_setup, kwargs_pixel)
+                                                                  self._pixel_supersampling_factor, kwargs_setup, kwargs_pixel)
         else:
             raise NotImplementedError("Pixelated light profiles other than 'GALSIM' not implemented")
         return kwargs_interpol
