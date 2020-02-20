@@ -1,14 +1,13 @@
 from addict import Dict
 import lenstronomy.Util.param_util as param_util
 from .base_bnn_prior import BaseBNNPrior
-from baobab.sim_utils import galsim_utils
 
-class GalsimSourcePrior(BaseBNNPrior):
+class RealSourcePrior(BaseBNNPrior):
     """BNN prior with independent parameters
 
     Note
     ----
-    first test for Learnlet training set
+    first test for pixelated realistic source training set
 
     """
     def __init__(self, bnn_omega, components, external):
@@ -98,6 +97,7 @@ class GalsimSourcePrior(BaseBNNPrior):
             raise ValueError("Image size, pixel scale, etc. not provided, use self._pixel_image_size() to do so")
         kwargs_setup = self.external['src_light']
         if self.src_light.profile == 'GALSIM':
+            from baobab.sim_utils import galsim_utils
             kwargs_interpol = galsim_utils.kwargs_galsim2interpol(self._pixel_image_size, self._pixel_pixel_scale, 
                                                                   self._pixel_supersampling_factor, kwargs_setup, kwargs_pixel)
         else:

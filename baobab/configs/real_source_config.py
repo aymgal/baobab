@@ -5,8 +5,8 @@ from addict import Dict
 base_path = '/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/Forked/baobab_forked/demo_test'
 
 cfg = Dict()
-cfg.name = 'galsim_source'
-cfg.bnn_prior_class = 'GalsimSourcePrior'
+cfg.name = 'real_source'
+cfg.bnn_prior_class = 'RealSourcePrior'
 cfg.out_dir = os.path.join(base_path, 'galsim_test')
 cfg.seed = 18 # random seed
 cfg.n_data = 50 # number of images to generate
@@ -18,7 +18,7 @@ cfg.selection = dict(
                  magnification=dict(
                                     min=2.0
                                     ),
-                 initial=["lambda x: x['lens_mass']['theta_E'] > 0.5",]
+                 initial=[] #["lambda x: x['lens_mass']['theta_E'] > 0.5",]
                  )
 
 cfg.instrument = dict(
@@ -41,16 +41,18 @@ cfg.psf = dict(
            )
 
 cfg.numerics = dict(
-                supersampling_factor=1)
+                supersampling_factor=3)
 
 cfg.image = dict(
              num_pix=100, # cutout pixel size
              inverse=False, # if True, coord sys is ra to the left, if False, to the right 
              )
 
+# put here some general (fixed) settings that are passed to the mass/light profiles (when supported)
 cfg.external = dict(
-                    src_light = dict( # should be consistent with 'GALSIM' profile
-                            psf_pixel_size=0.02,
+                    src_light = dict(
+                            # the following parameters are meant to be used with 'GALSIM' profile
+                            psf_pixel_size=0.074,
                             no_convolution=False,
                             catalog_dir='/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/divers/GalSim-releases-2.2/examples/data',
                             catalog_name='real_galaxy_catalog_23.5_example.fits',
@@ -84,8 +86,8 @@ cfg.bnn_omega = dict(
                                                 dist='normal',
                                                 mu=2,
                                                 sigma=0.1,
-                                                lower=0.5,
-                                                upper=2
+                                                lower=1,
+                                                upper=3
                                                 ),
                                  # Beta(a, b)
                                  e1 = dict(
@@ -118,86 +120,6 @@ cfg.bnn_omega = dict(
                                                      )
                                        ),
 
-                 # lens_light = dict(
-                 #                  profile='SERSIC_ELLIPSE', # only available type now
-                 #                  # Centered at lens mass
-                 #                  # Lognormal(mu, sigma^2)
-                 #                  magnitude = dict(
-                 #                             dist='normal',
-                 #                             mu=17.325,
-                 #                             sigma=0.001,
-                 #                             ),
-                 #                  n_sersic = dict(
-                 #                                  dist='normal',
-                 #                                  mu=2.683,
-                 #                                  sigma=0.001,
-                 #                                  ),
-                 #                  R_sersic = dict(
-                 #                                  dist='normal',
-                 #                                  mu=0.949,
-                 #                                  sigma=0.001,
-                                                  
-                 #                                  ),
-                 #                  # Beta(a, b)
-                 #                  e1 = dict(
-                 #                          dist='beta',
-                 #                          a=4.0,
-                 #                          b=4.0,
-                 #                          lower=-0.9,
-                 #                          upper=0.9),
-                 #                    e2 = dict(
-                 #                          dist='beta',
-                 #                          a=4.0,
-                 #                          b=4.0,
-                 #                          lower=-0.9,
-                 #                          upper=0.9),
-                 #                  ),
-
-                 # src_light = dict(
-                 #                profile='SERSIC_ELLIPSE', # only available type now
-                 #                # Lognormal(mu, sigma^2)
-                 #                magnitude = dict(
-                 #                             dist='normal',
-                 #                             mu=20.407,
-                 #                             sigma=0.001,
-                 #                             ),
-                 #                n_sersic = dict(
-                 #                                dist='lognormal',
-                 #                                mu=0.7,
-                 #                                sigma=0.4,
-                 #                                ),
-                 #                R_sersic = dict(
-                 #                                dist='normal',
-                 #                                mu=0.4,
-                 #                                sigma=0.01,
-                 #                                ),
-                 #                # Normal(mu, sigma^2)
-                 #                center_x = dict(
-                 #                         dist='normal',
-                 #                                mu=0,
-                 #                                sigma=0.01,
-                                                
-                 #                                ),
-                 #                center_y = dict(
-                 #                         dist='normal',
-                 #                                mu=0,
-                 #                                sigma=0.01,
-                                                
-                 #                                ),
-                 #                e1 = dict(
-                 #                          dist='beta',
-                 #                          a=4.0,
-                 #                          b=4.0,
-                 #                          lower=-0.9,
-                 #                          upper=0.9),
-                 #                e2 = dict(
-                 #                          dist='beta',
-                 #                          a=4.0,
-                 #                          b=4.0,
-                 #                          lower=-0.9,
-                 #                          upper=0.9),
-                 #                ),
-
                  src_light = dict(
                                 profile='GALSIM',
 
@@ -214,7 +136,7 @@ cfg.bnn_omega = dict(
                                 galsim_scale = dict(
                                             dist='normal',
                                             mu=1,
-                                            sigma=0.001,
+                                            sigma=0.1,
                                             ),
                                 galsim_angle = dict(
                                              dist='normal',
@@ -224,14 +146,14 @@ cfg.bnn_omega = dict(
                                              upper=np.pi,
                                              ),
                                 galsim_center_x = dict(
-                                         dist='normal',
-                                                mu=0,
-                                                sigma=2,
+                                                dist='uniform',
+                                                lower=-5,
+                                                upper=5,
                                                 ),
                                 galsim_center_y = dict(
-                                         dist='normal',
-                                                mu=0,
-                                                sigma=2,
+                                                dist='uniform',
+                                                lower=-5,
+                                                upper=5,
                                                 ),
                                 ),
 

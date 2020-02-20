@@ -71,7 +71,7 @@ def main():
     n_psf = len(psf_models)
     # Instantiate density models
     # in case of pixelated light profiles, e.g. from galsim galaxies
-    pixel_profile_bool = cfg.bnn_omega.src_light.profile in ['GALSIM']
+    pixel_profile_bool = cfg.bnn_omega.src_light.profile in ['GALSIM']  # add other if necessary
     if pixel_profile_bool is True:
         src_light_profile_eff = 'INTERPOL'
     else:

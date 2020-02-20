@@ -16,7 +16,7 @@ def get_galsim_image(image_size, pixel_size, catalog_dir=None, catalog_name=None
     cat = galsim.COSMOSCatalog(dir=catalog_dir, file_name=catalog_name)
     if verbose:
         print("Number of galaxies in catalog '{}' : {}".format(catalog_name, cat.nobjects))
-        
+    
     # effective pixel size
     pixel_size_eff = pixel_size / galsim_scale
         
@@ -37,6 +37,7 @@ def get_galsim_image(image_size, pixel_size, catalog_dir=None, catalog_name=None
             # Dilate the PSF to match required resolution
             psf = gal.original_psf.dilate(psf_dilate_factor).withFlux(1.)
             # Get the actual image of the psf
+            # note that we set 'use_true_center' to False to make sure that the PSF is centered on a pixel (event if even-size image)
             psf_kernel = psf.drawImage(nx=psf_size, ny=psf_size, use_true_center=False, 
                                        scale=pixel_size_eff).array
         else:
@@ -46,6 +47,7 @@ def get_galsim_image(image_size, pixel_size, catalog_dir=None, catalog_name=None
         # Dilate the PSF to match required resolution
         psf = galsim.Gaussian(fwhm=psf_gaussian_fwhm, flux=1.0)
         # Get the actual image of the psf
+        # note that we set 'use_true_center' to False to make sure that the PSF is centered on a pixel (event if even-size image)
         psf_kernel = psf.drawImage(nx=psf_size, ny=psf_size, use_true_center=False, 
                                    scale=pixel_size_eff).array
         psf_kernel_untouched = np.zeros((image_size, image_size))
