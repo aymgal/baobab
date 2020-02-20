@@ -76,22 +76,23 @@ def kwargs_galsim2interpol(image_size, pixel_size, supersampling_factor,
     Takes as input galsim parameters, generates a galsim galaxy from those
     and setup the 'INTERPOL' light profile of lenstronomy with the 
     """
+    kwargs_interpol = {}
+    if 'magnitude' in kwargs_galsim_param:
+        kwargs_interpol['magnitude'] = kwargs_galsim_param.pop('magnitude')
     # prepare for galsim
-    args, kwargs = _prepare_galsim(image_size, pixel_size, supersampling_factor,
-                                   kwargs_galsim_setup, kwargs_galsim_param)
+    pixel_size_ss, args, kwargs = _prepare_galsim(image_size, pixel_size, supersampling_factor,
+                                                  kwargs_galsim_setup, kwargs_galsim_param)
     # generate galaxy
     image, psf_kernel, _ = get_galsim_image(*args, **kwargs)
     # setup the 'INTERPOL' profile
-    kwargs_interpol = {
+    kwargs_interpol.update({
         'image': image,
-        'scale': pixel_size,
+        'scale': pixel_size_ss,
         'center_x': 0,  # performed by galsim
         'center_y': 0,  # performed by galsim
         'phi_G': 0,     # performed by galsim
         # Note that 'amp' should not be set here, it will be computed according to the magnitude
-    }
-    if 'magnitude' in kwargs_galsim_param:
-        kwargs_interpol['magnitude'] = kwargs_galsim_param['magnitude']
+    })
     return kwargs_interpol
 
 def _prepare_galsim(image_size, pixel_size, supersampling_factor, 
@@ -100,15 +101,14 @@ def _prepare_galsim(image_size, pixel_size, supersampling_factor,
     kwargs_galsim_param['catalog_index'] = int(kwargs_galsim_param['catalog_index'])
     # magnitude normalization performed in baobab afterwards, not in galsim
     kwargs_galsim_param_ = kwargs_galsim_param.copy()
-    if 'magnitude' in kwargs_galsim_param:
-        del kwargs_galsim_param_['magnitude']
     # galsim takes offset in pixel units instead of physical units
-    if 'magnitude' in kwargs_galsim_param:
+    if 'magnitude' in kwargs_galsim_param_:
         kwargs_galsim_param_['galsim_center_x'] /= pixel_size
         kwargs_galsim_param_['galsim_center_y'] /= pixel_size
     # update pixel size so the galsim resolution matches the lenstronomy one *after* supersampling
-    pixel_size_eff = pixel_size / supersampling_factor
+    image_size_ss = image_size * supersampling_factor
+    pixel_size_ss = pixel_size / supersampling_factor
     # pack galsim settings
-    args = (image_size, pixel_size_eff)
+    args = (image_size_ss, pixel_size_ss)
     kwargs = util.merge_dicts(kwargs_galsim_setup, kwargs_galsim_param_)
-    return args, kwargs
+    return pixel_size_ss, args, kwargs

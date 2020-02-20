@@ -8,7 +8,7 @@ cfg = Dict()
 cfg.name = 'real_source'
 cfg.bnn_prior_class = 'RealSourcePrior'
 cfg.out_dir = os.path.join(base_path, 'galsim_test')
-cfg.seed = 18 # random seed
+cfg.seed = 567 # random seed
 cfg.n_data = 50 # number of images to generate
 cfg.train_vs_val = 'train'
 cfg.components = ['lens_mass', 'external_shear', 'src_light']  #, 'lens_light']
@@ -37,14 +37,15 @@ cfg.observation = dict(
 cfg.psf = dict(
            type='PIXEL', # string, type of PSF ('GAUSSIAN' and 'PIXEL' supported)
            kernel_size=91, # dimension of provided PSF kernel, only valid when profile='PIXEL'
-           which_psf_maps=None, # None if rotate among all available PSF maps, else seed number of the map to generate all images with that map
+           which_psf_maps=101, # None if rotate among all available PSF maps, else seed number of the map to generate all images with that map
            )
 
 cfg.numerics = dict(
-                supersampling_factor=3)
+                supersampling_factor=3  # prevent 5th image at the center due to numerical issues with cuspy mass profiles
+                )
 
 cfg.image = dict(
-             num_pix=100, # cutout pixel size
+             num_pix=99, # cutout pixel size
              inverse=False, # if True, coord sys is ra to the left, if False, to the right 
              )
 
@@ -52,7 +53,9 @@ cfg.image = dict(
 cfg.external = dict(
                     src_light = dict(
                             # the following parameters are meant to be used with 'GALSIM' profile
-                            psf_pixel_size=0.074,
+                            galaxy_type='real',
+                            psf_type='real',
+                            psf_pixel_size=0.08,
                             no_convolution=False,
                             catalog_dir='/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/divers/GalSim-releases-2.2/examples/data',
                             catalog_name='real_galaxy_catalog_23.5_example.fits',
@@ -62,10 +65,9 @@ cfg.external = dict(
 
 cfg.bnn_omega = dict(
                  lens_mass = dict(
-                                 profile='SPEMD', # only available type now
-                                 # Normal(mu, sigma^2)
+                                 profile='SPEMD',
                                  center_x = dict(
-                                          dist='normal', # one of ['normal', 'beta']
+                                          dist='normal',
                                           mu=0.0,
                                           sigma=1.e-6,
                                           ),
@@ -74,22 +76,20 @@ cfg.bnn_omega = dict(
                                           mu=0.0,
                                           sigma=1.e-6,
                                           ),
-                                 # Lognormal(mu, sigma^2)
                                  gamma = dict(
                                               dist='normal',
                                               mu=2,
                                               sigma=0.05,
-                                              lower=1.6,
-                                              upper=2.4
+                                              lower=1.8,
+                                              upper=2.2
                                               ),
                                  theta_E = dict(
                                                 dist='normal',
-                                                mu=2,
-                                                sigma=0.1,
-                                                lower=1,
-                                                upper=3
+                                                mu=1.6,
+                                                sigma=0.05,
+                                                lower=0.4,
+                                                upper=2
                                                 ),
-                                 # Beta(a, b)
                                  e1 = dict(
                                           dist='beta',
                                           a=4.0,
@@ -109,7 +109,7 @@ cfg.bnn_omega = dict(
                                        gamma_ext = dict(
                                                          dist='normal',
                                                          mu=0, # See overleaf doc
-                                                         sigma=0.001,
+                                                         sigma=0.05,
                                                          ),
                                        psi_ext = dict(
                                                      dist='normal',
@@ -147,13 +147,13 @@ cfg.bnn_omega = dict(
                                              ),
                                 galsim_center_x = dict(
                                                 dist='uniform',
-                                                lower=-5,
-                                                upper=5,
+                                                lower=-3,
+                                                upper=3,
                                                 ),
                                 galsim_center_y = dict(
                                                 dist='uniform',
-                                                lower=-5,
-                                                upper=5,
+                                                lower=-3,
+                                                upper=3,
                                                 ),
                                 ),
 
