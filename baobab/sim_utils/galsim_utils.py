@@ -19,9 +19,6 @@ def get_galsim_image(image_size, pixel_size, catalog_dir=None, catalog_name=None
     
     # effective pixel size
     pixel_size_eff = pixel_size / galsim_scale
-        
-    # dilate factor for the PSF wrt to original HST
-    psf_dilate_factor = psf_pixel_size / 0.074  # taken for HST F814W band
     
     # Get galaxy object
     gal = cat.makeGalaxy(catalog_index, gal_type=galaxy_type, noise_pad_size=0)
@@ -35,6 +32,7 @@ def get_galsim_image(image_size, pixel_size, catalog_dir=None, catalog_name=None
             # Get original (untouched) PSF
             psf_kernel_untouched = gal.psf_image.array
             # Dilate the PSF to match required resolution
+            psf_dilate_factor = psf_pixel_size / 0.074  # taken for HST F814W band
             psf = gal.original_psf.dilate(psf_dilate_factor).withFlux(1.)
             # Get the actual image of the psf
             # note that we set 'use_true_center' to False to make sure that the PSF is centered on a pixel (event if even-size image)
@@ -78,12 +76,18 @@ def kwargs_galsim2interpol(image_size, pixel_size, supersampling_factor,
     """
     kwargs_interpol = {}
     if 'magnitude' in kwargs_galsim_param:
+        # magnitude normalization performed in baobab/lenstronomy afterwards, not in galsim
         kwargs_interpol['magnitude'] = kwargs_galsim_param.pop('magnitude')
     # prepare for galsim
     pixel_size_ss, args, kwargs = _prepare_galsim(image_size, pixel_size, supersampling_factor,
                                                   kwargs_galsim_setup, kwargs_galsim_param)
     # generate galaxy
     image, psf_kernel, _ = get_galsim_image(*args, **kwargs)
+
+    # import matplotlib.pyplot as plt
+    # plt.imshow(image, origin='lower', cmap='gist_stern')
+    # plt.show()
+
     # setup the 'INTERPOL' profile
     kwargs_interpol.update({
         'image': image,
@@ -99,16 +103,22 @@ def _prepare_galsim(image_size, pixel_size, supersampling_factor,
                     kwargs_galsim_setup, kwargs_galsim_param):
     # make sure the index is integer
     kwargs_galsim_param['catalog_index'] = int(kwargs_galsim_param['catalog_index'])
-    # magnitude normalization performed in baobab afterwards, not in galsim
     kwargs_galsim_param_ = kwargs_galsim_param.copy()
-    # galsim takes offset in pixel units instead of physical units
-    if 'magnitude' in kwargs_galsim_param_:
-        kwargs_galsim_param_['galsim_center_x'] /= pixel_size
-        kwargs_galsim_param_['galsim_center_y'] /= pixel_size
-    # update pixel size so the galsim resolution matches the lenstronomy one *after* supersampling
+    kwargs_galsim_setup_ = kwargs_galsim_setup.copy()
+    # update pixel sizes and image sizes so the galsim resolution matches the lenstronomy one *after* supersampling
     image_size_ss = image_size * supersampling_factor
     pixel_size_ss = pixel_size / supersampling_factor
+    # if 'psf_gaussian_fwhm' in kwargs_galsim_setup_:
+    #     kwargs_galsim_setup_['psf_gaussian_fwhm'] /= supersampling_factor
+    if 'psf_pixel_size' in kwargs_galsim_setup_:
+        kwargs_galsim_setup_['psf_pixel_size'] /= supersampling_factor
+    if 'psf_size' in kwargs_galsim_setup_:
+        kwargs_galsim_setup_['psf_size'] /= supersampling_factor
+    # galsim takes offset in pixel units instead of physical units
+    if 'galsim_center_x' in kwargs_galsim_param_:
+        kwargs_galsim_param_['galsim_center_x'] /= pixel_size
+        kwargs_galsim_param_['galsim_center_y'] /= pixel_size
     # pack galsim settings
     args = (image_size_ss, pixel_size_ss)
-    kwargs = util.merge_dicts(kwargs_galsim_setup, kwargs_galsim_param_)
+    kwargs = util.merge_dicts(kwargs_galsim_setup_, kwargs_galsim_param_)
     return pixel_size_ss, args, kwargs

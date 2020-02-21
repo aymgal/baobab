@@ -8,11 +8,11 @@ cfg = Dict()
 cfg.name = 'real_source'
 cfg.bnn_prior_class = 'RealSourcePrior'
 cfg.out_dir = os.path.join(base_path, 'galsim_test')
-cfg.seed = 567 # random seed
+cfg.seed = 213 # random seed
 cfg.n_data = 50 # number of images to generate
 cfg.train_vs_val = 'train'
 cfg.components = ['lens_mass', 'external_shear', 'src_light']  #, 'lens_light']
-cfg.checkpoint_interval = 2
+cfg.checkpoint_interval = 1
 
 cfg.selection = dict(
                  magnification=dict(
@@ -54,8 +54,10 @@ cfg.external = dict(
                     src_light = dict(
                             # the following parameters are meant to be used with 'GALSIM' profile
                             galaxy_type='real',
-                            psf_type='real',
-                            psf_pixel_size=0.08,
+                            psf_type='gaussian',
+                            psf_gaussian_fwhm=0.12,
+                            # psf_pixel_size=0.074,  # only with psf_type='real'
+                            # psf_size=49,  # only with psf_type='real'
                             no_convolution=False,
                             catalog_dir='/Users/aymericg/Documents/EPFL/PhD_LASTRO/Code/divers/GalSim-releases-2.2/examples/data',
                             catalog_name='real_galaxy_catalog_23.5_example.fits',
@@ -80,15 +82,15 @@ cfg.bnn_omega = dict(
                                               dist='normal',
                                               mu=2,
                                               sigma=0.05,
-                                              lower=1.8,
-                                              upper=2.2
+                                              lower=1.6,
+                                              upper=2.4
                                               ),
                                  theta_E = dict(
                                                 dist='normal',
-                                                mu=1.6,
+                                                mu=1.2,
                                                 sigma=0.05,
-                                                lower=0.4,
-                                                upper=2
+                                                lower=0.8,
+                                                upper=1.6
                                                 ),
                                  e1 = dict(
                                           dist='beta',
@@ -135,25 +137,25 @@ cfg.bnn_omega = dict(
                                              ),
                                 galsim_scale = dict(
                                             dist='normal',
-                                            mu=1,
-                                            sigma=0.1,
+                                            mu=0.8,
+                                            sigma=0.05,
+                                            lower=0.6,
+                                            upper=1,
                                             ),
                                 galsim_angle = dict(
-                                             dist='normal',
-                                             mu=0,
-                                             sigma=0.05,
+                                             dist='uniform',
                                              lower=-np.pi,
                                              upper=np.pi,
                                              ),
                                 galsim_center_x = dict(
                                                 dist='uniform',
-                                                lower=-3,
-                                                upper=3,
+                                                lower=-2,
+                                                upper=2,
                                                 ),
                                 galsim_center_y = dict(
                                                 dist='uniform',
-                                                lower=-3,
-                                                upper=3,
+                                                lower=-2,
+                                                upper=2,
                                                 ),
                                 ),
 

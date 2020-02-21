@@ -118,8 +118,14 @@ def main():
                                kernel_point_source=psf_model,
                                background_noise=0.0)
         data_api = DataAPI(cfg.image.num_pix, **kwargs_detector)
+
         # Generate the image
-        img, img_features = generate_image(sample, psf_model, data_api, lens_mass_model, src_light_model, lens_eq_solver, cfg.instrument.pixel_scale, cfg.image.num_pix, cfg.components, cfg.numerics, min_magnification=cfg.selection.magnification.min, lens_light_model=lens_light_model, ps_model=ps_model)
+        img, img_features = generate_image(sample, psf_model, data_api, lens_mass_model, src_light_model, lens_eq_solver, 
+                                           cfg.instrument.pixel_scale, cfg.image.num_pix, cfg.components, cfg.numerics, 
+                                           min_magnification=cfg.selection.magnification.min, 
+                                           lens_light_model=lens_light_model, ps_model=ps_model,
+                                           add_noise=False)
+        
         if img is None: # couldn't make the magnification cut
             continue
         # Save image file
@@ -131,37 +137,22 @@ def main():
         for comp in cfg.components:
             for param_name, param_value in sample[comp].items():
                 meta['{:s}_{:s}'.format(comp, param_name)] = param_value
+            
             # typically for pixelated profiles, originally sampled param can be added to metadata 
             if hasattr(bnn_prior, 'original_sample'):
                 for param_name, param_value in bnn_prior.original_sample[comp].items():
                     if '{:s}_{:s}'.format(comp, param_name) not in meta:
                         meta['{:s}_{:s}'.format(comp, param_name)] = param_value  
-        #if cfg.bnn_prior_class in ['DiagonalCosmoBNNPrior']:
-        #    if cfg.bnn_omega.time_delays.calculate_time_delays:
-        #        # Order time delays in increasing dec
-        #        unordered_td = sample['misc']['true_td'] # np array
-        #        increasing_dec_i = np.argsort(img_features['y_image'])
-        #        td = unordered_td[increasing_dec_i]
-        #        td = td[1:] - td[0] # take BCD - A
-        #        sample['misc']['true_td'] = list(td)
-        #        img_features['x_image'] = img_features['x_image'][increasing_dec_i]
-        #        img_features['y_image'] = img_features['y_image'][increasing_dec_i]
-        if cfg.bnn_prior_class in ['EmpiricalBNNPrior', 'DiagonalCosmoBNNPrior']:
-            for misc_name, misc_value in sample['misc'].items():
-                meta['{:s}'.format(misc_name)] = misc_value
-        if 'agn_light' in cfg.components:
-            x_image = np.zeros(4)
-            y_image = np.zeros(4)
-            n_img = len(img_features['x_image'])
-            meta['n_img'] = n_img
-            x_image[:n_img] = img_features['x_image']
-            y_image[:n_img] = img_features['y_image']
-            for i in range(4):
-                meta['x_image_{:d}'.format(i)] = x_image[i]
-                meta['y_image_{:d}'.format(i)] = y_image[i]
+
         meta['src_light_amp'] = img_features['src_light_amp']
         meta['total_magnification'] = img_features['total_magnification']
         meta['img_filename'] = img_filename
+        
+        # In case of 'INTERPOL' models being used, delete their cache
+        if pixel_source_bool is True:
+            src_light_model.delete_interpol_caches()
+            del meta['src_light_image']  # useless in a csv file
+
         metadata = metadata.append(meta, ignore_index=True)
         # Export metadata.csv for the first time
         if current_idx == 0:
@@ -180,13 +171,11 @@ def main():
             # Initialize empty dataframe for next checkpoint chunk
             metadata = pd.DataFrame()
             gc.collect()
+
         # Update progress
         current_idx += 1
         pbar.update(1)
-        # In case of 'INTERPOL' models being used, delete their cache
-        if pixel_source_bool is True:
-            src_light_model.delete_interpol_caches()
-            del metadata['src_light_image']
+    
     # Export to csv
     metadata.to_csv(metadata_path, index=None, mode='a', header=None)
     pbar.close()
